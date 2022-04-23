@@ -1,0 +1,15 @@
+{
+  "$schema": "file:///C:/qub/qub/javaproject-java/data/javaproject.schema.json",
+  "publisher": "qub",
+  "project": "storage-java",
+  "version": "1",
+  "java": {
+    "dependencies": [
+      {
+        "publisher": "qub",
+        "project": "md5-java",
+        "version": "2"
+      }
+    ]
+  }
+}

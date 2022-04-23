@@ -1,0 +1,67 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "qub/InMemoryStorageContainerTests.java",
+      "classPaths": [
+        "outputs/sources",
+        "outputs/tests",
+        "C:/qub/qub/javaproject-java/versions/57/javaproject-java.jar",
+        "C:/qub/qub/javaproject-java/versions/57/javaproject-java.tests.jar",
+        "C:/qub/qub/projectjson-java/versions/126/projectjson-java.jar",
+        "C:/qub/qub/projectjson-java/versions/126/projectjson-java.tests.jar",
+        "C:/qub/qub/git-java/versions/51/git-java.jar",
+        "C:/qub/qub/git-java/versions/51/git-java.tests.jar",
+        "C:/qub/qub/github-java/versions/33/github-java.jar",
+        "C:/qub/qub/github-java/versions/33/github-java.tests.jar",
+        "C:/qub/qub/http-java/versions/55/http-java.jar",
+        "C:/qub/qub/http-java/versions/55/http-java.tests.jar",
+        "C:/qub/qub/intellij-java/versions/25/intellij-java.jar",
+        "C:/qub/qub/intellij-java/versions/25/intellij-java.tests.jar",
+        "C:/qub/qub/xml-java/versions/39/xml-java.jar",
+        "C:/qub/qub/xml-java/versions/39/xml-java.tests.jar",
+        "C:/qub/qub/vscode-java/versions/9/vscode-java.jar",
+        "C:/qub/qub/vscode-java/versions/9/vscode-java.tests.jar",
+        "C:/qub/qub/md5-java/versions/2/md5-java.jar",
+        "C:/qub/qub/md5-java/versions/2/md5-java.tests.jar",
+        "C:/qub/qub/lib-java/versions/186/lib-java.jar",
+        "C:/qub/qub/lib-java/versions/186/lib-java.tests.jar"
+      ],
+      "mainClass": "qub.JavaProjectTest",
+      "args": "--testjson=false --pattern=qub.InMemoryStorageContainerTests"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "qub/StorageContainerTests.java",
+      "classPaths": [
+        "outputs/sources",
+        "outputs/tests",
+        "C:/qub/qub/javaproject-java/versions/57/javaproject-java.jar",
+        "C:/qub/qub/javaproject-java/versions/57/javaproject-java.tests.jar",
+        "C:/qub/qub/projectjson-java/versions/126/projectjson-java.jar",
+        "C:/qub/qub/projectjson-java/versions/126/projectjson-java.tests.jar",
+        "C:/qub/qub/git-java/versions/51/git-java.jar",
+        "C:/qub/qub/git-java/versions/51/git-java.tests.jar",
+        "C:/qub/qub/github-java/versions/33/github-java.jar",
+        "C:/qub/qub/github-java/versions/33/github-java.tests.jar",
+        "C:/qub/qub/http-java/versions/55/http-java.jar",
+        "C:/qub/qub/http-java/versions/55/http-java.tests.jar",
+        "C:/qub/qub/intellij-java/versions/25/intellij-java.jar",
+        "C:/qub/qub/intellij-java/versions/25/intellij-java.tests.jar",
+        "C:/qub/qub/xml-java/versions/39/xml-java.jar",
+        "C:/qub/qub/xml-java/versions/39/xml-java.tests.jar",
+        "C:/qub/qub/vscode-java/versions/9/vscode-java.jar",
+        "C:/qub/qub/vscode-java/versions/9/vscode-java.tests.jar",
+        "C:/qub/qub/md5-java/versions/2/md5-java.jar",
+        "C:/qub/qub/md5-java/versions/2/md5-java.tests.jar",
+        "C:/qub/qub/lib-java/versions/186/lib-java.jar",
+        "C:/qub/qub/lib-java/versions/186/lib-java.tests.jar"
+      ],
+      "mainClass": "qub.JavaProjectTest",
+      "args": "--testjson=false --pattern=qub.StorageContainerTests"
+    }
+  ]
+}
