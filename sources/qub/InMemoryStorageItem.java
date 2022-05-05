@@ -9,7 +9,7 @@ public class InMemoryStorageItem extends StorageItemBase
     private final String id;
     private DateTime createdAt;
     private DateTime lastModified;
-    private InMemoryStorageItemAttributes attributes;
+    private InMemoryStorageAttributes attributes;
 
     private InMemoryStorageItem(InMemoryStorageContainer container, String id)
     {
@@ -27,7 +27,13 @@ public class InMemoryStorageItem extends StorageItemBase
     {
         return new InMemoryStorageItem(container, id);
     }
-    
+
+    @Override
+    public InMemoryStorageContainer getContainer()
+    {
+        return this.container;
+    }
+
     @Override
     public String getId()
     {
@@ -65,22 +71,28 @@ public class InMemoryStorageItem extends StorageItemBase
     }
 
     @Override
-    public Result<StorageItemAttributes> getAttributes()
+    public Result<StorageAttributes> getAttributes()
     {
         return Result.success(this.attributes);
     }
 
     @Override
-    public Result<Void> setAttributes(StorageItemAttributes attributes)
+    public Result<Void> setAttributes(StorageAttributes attributes)
     {
-        // TODO Auto-generated method stub
-        return null;
+        PreCondition.assertNotNull(attributes, "attributes");
+
+        return Result.create(() ->
+        {
+            this.attributes = InMemoryStorageAttributes.create()
+                .setValues(attributes);
+        });
     }
 
     @Override
     public boolean equals(StorageItem rhs)
     {
-        // TODO Auto-generated method stub
-        return false;
+        return rhs != null &&
+            this.getContainer().equals(rhs.getContainer()) &&
+            this.getId().equals(rhs.getId());
     }
 }

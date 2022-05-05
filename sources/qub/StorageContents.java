@@ -3,7 +3,7 @@ package qub;
 /**
  * Contents that have been assigned to a {@link StorageItem}.
  */
-public interface StorageItemContents
+public interface StorageContents
 {
     /**
      * Get the {@link DateTime} when these attributes were set.

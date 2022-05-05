@@ -6,6 +6,11 @@ package qub;
 public interface StorageItem
 {
     /**
+     * Get the {@link StorageContainer} that this {@link StorageItem} belongs to.
+     */
+    public StorageContainer getContainer();
+
+    /**
      * Get the id of this {@link StorageItem}.
      */
     public String getId();
@@ -21,16 +26,16 @@ public interface StorageItem
     public DateTime getCreatedAt();
 
     /**
-     * Get the {@link StorageItemAttributes} that are assigned to this {@link StorageItem}.
+     * Get the {@link StorageAttributes} that are assigned to this {@link StorageItem}.
      */
-    public Result<StorageItemAttributes> getAttributes();
+    public Result<StorageAttributes> getAttributes();
 
     /**
-     * Set the {@link StorageItemAttributes} that are assigned to this {@link StorageItem}.
-     * @param attributes The {@link StorageItemAttributes} that are assigned to this
+     * Set the {@link StorageAttributes} that are assigned to this {@link StorageItem}.
+     * @param attributes The {@link StorageAttributes} that are assigned to this
      * {@link StorageItem}.
      */
-    public Result<Void> setAttributes(StorageItemAttributes attributes);
+    public Result<Void> setAttributes(StorageAttributes attributes);
 
     /**
      * Get whether this {@link StorageItem} is equal to the provided {@link StorageItem}.

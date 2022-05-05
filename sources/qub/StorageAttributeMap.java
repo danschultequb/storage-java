@@ -3,11 +3,16 @@ package qub;
 /**
  * A collection of attribute values.
  */
-public interface StorageItemAttributeMap extends Iterable<StorageItemMapAttribute>
+public interface StorageAttributeMap extends Iterable<StorageMapAttribute>
 {
+    public static InMemoryStorageAttributeMap create()
+    {
+        return InMemoryStorageAttributeMap.create();
+    }
+    
     /**
      * Get an {@link Iterator} that returns the names of the attributes in this
-     * {@link StorageItemAttributeMap}.
+     * {@link StorageAttributeMap}.
      */
     public Iterator<String> iterateAttributeNames();
 
@@ -16,7 +21,7 @@ public interface StorageItemAttributeMap extends Iterable<StorageItemMapAttribut
      * @param attributeName The name of the value to get.
      * @return The value associated with the provided attributeName.
      */
-    public Result<StorageItemAttributeValue> getValue(String attributeName);
+    public Result<? extends StorageAttributeValue> getValue(String attributeName);
 
     /**
      * Get the value associated with the provided attributeName.
@@ -27,7 +32,7 @@ public interface StorageItemAttributeMap extends Iterable<StorageItemMapAttribut
     {
         return Result.create(() ->
         {
-            final StorageItemAttributeValue attributeValue = this.getValue(attributeName).await();
+            final StorageAttributeValue attributeValue = this.getValue(attributeName).await();
             return attributeValue.getBooleanValue().await();
         });
     }
@@ -41,7 +46,7 @@ public interface StorageItemAttributeMap extends Iterable<StorageItemMapAttribut
     {
         return Result.create(() ->
         {
-            final StorageItemAttributeValue attributeValue = this.getValue(attributeName).await();
+            final StorageAttributeValue attributeValue = this.getValue(attributeName).await();
             return attributeValue.getIntegerValue().await();
         });
     }
@@ -55,7 +60,7 @@ public interface StorageItemAttributeMap extends Iterable<StorageItemMapAttribut
     {
         return Result.create(() ->
         {
-            final StorageItemAttributeValue attributeValue = this.getValue(attributeName).await();
+            final StorageAttributeValue attributeValue = this.getValue(attributeName).await();
             return attributeValue.getLongValue().await();
         });
     }
@@ -69,7 +74,7 @@ public interface StorageItemAttributeMap extends Iterable<StorageItemMapAttribut
     {
         return Result.create(() ->
         {
-            final StorageItemAttributeValue attributeValue = this.getValue(attributeName).await();
+            final StorageAttributeValue attributeValue = this.getValue(attributeName).await();
             return attributeValue.getDoubleValue().await();
         });
     }
@@ -83,7 +88,7 @@ public interface StorageItemAttributeMap extends Iterable<StorageItemMapAttribut
     {
         return Result.create(() ->
         {
-            final StorageItemAttributeValue attributeValue = this.getValue(attributeName).await();
+            final StorageAttributeValue attributeValue = this.getValue(attributeName).await();
             return attributeValue.getStringValue().await();
         });
     }
@@ -93,11 +98,11 @@ public interface StorageItemAttributeMap extends Iterable<StorageItemMapAttribut
      * @param attributeName The name of the value to get.
      * @return The value associated with the provided attributeName.
      */
-    public default Result<StorageItemAttributeMap> getMap(String attributeName)
+    public default Result<StorageAttributeMap> getMap(String attributeName)
     {
         return Result.create(() ->
         {
-            final StorageItemAttributeValue attributeValue = this.getValue(attributeName).await();
+            final StorageAttributeValue attributeValue = this.getValue(attributeName).await();
             return attributeValue.getMapValue().await();
         });
     }
@@ -107,11 +112,11 @@ public interface StorageItemAttributeMap extends Iterable<StorageItemMapAttribut
      * @param attributeName The name of the value to get.
      * @return The value associated with the provided attributeName.
      */
-    public default Result<StorageItemAttributeArray> getArray(String attributeName)
+    public default Result<StorageAttributeArray> getArray(String attributeName)
     {
         return Result.create(() ->
         {
-            final StorageItemAttributeValue attributeValue = this.getValue(attributeName).await();
+            final StorageAttributeValue attributeValue = this.getValue(attributeName).await();
             return attributeValue.getArrayValue().await();
         });
     }

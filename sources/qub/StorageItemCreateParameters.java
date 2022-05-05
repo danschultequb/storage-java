@@ -8,7 +8,7 @@ public class StorageItemCreateParameters
     private String id;
     private DateTime createdAt;
     private DateTime lastModified;
-    private StorageItemAttributes attributes;
+    private StorageAttributes attributes;
 
     private StorageItemCreateParameters()
     {
@@ -102,17 +102,17 @@ public class StorageItemCreateParameters
         return this;
     }
 
-    public StorageItemAttributes getAttributes()
+    public StorageAttributes getAttributes()
     {
         return this.attributes;
     }
 
     /**
-     * Set the {@link StorageItemAttributes} for the {@link StorageItem}.
-     * @param attributes The {@link StorageItemAttributes} for the {@link StorageItem}.
+     * Set the {@link StorageAttributes} for the {@link StorageItem}.
+     * @param attributes The {@link StorageAttributes} for the {@link StorageItem}.
      * @return This object for method chaining.
      */
-    public StorageItemCreateParameters setAttributes(StorageItemAttributes attributes)
+    public StorageItemCreateParameters setAttributes(StorageAttributes attributes)
     {
         PreCondition.assertNotNull(attributes, "attributes");
 

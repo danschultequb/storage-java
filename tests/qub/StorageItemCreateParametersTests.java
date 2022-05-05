@@ -113,7 +113,7 @@ public interface StorageItemCreateParametersTests
                 {
                     final StorageItemCreateParameters parameters = StorageItemCreateParameters.create();
 
-                    final MutableStorageItemAttributes attributes = StorageItemAttributes.create()
+                    final MutableStorageAttributes attributes = StorageAttributes.create()
                         .setString("hello", "there");
                     final StorageItemCreateParameters setAttributesResult = parameters.setAttributes(attributes);
                     test.assertSame(parameters, setAttributesResult);

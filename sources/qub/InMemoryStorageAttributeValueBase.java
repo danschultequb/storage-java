@@ -1,9 +1,9 @@
 package qub;
 
-public abstract class InMemoryStorageItemAttributeValueBase implements StorageItemAttributeValue
+public abstract class InMemoryStorageAttributeValueBase implements StorageAttributeValue
 {
     /**
-     * Get the type of the value stored in this {@link StorageItemAttributeValue}.
+     * Get the type of the value stored in this {@link StorageAttributeValue}.
      */
     protected abstract Class<?> getValueType();
 
@@ -16,9 +16,9 @@ public abstract class InMemoryStorageItemAttributeValueBase implements StorageIt
     }
 
     @Override
-    public Result<StorageItemAttributeArray> getArrayValue()
+    public Result<StorageAttributeArray> getArrayValue()
     {
-        return this.wrongType(StorageItemAttributeArray.class);
+        return this.wrongType(StorageAttributeArray.class);
     }
 
     @Override
@@ -46,9 +46,9 @@ public abstract class InMemoryStorageItemAttributeValueBase implements StorageIt
     }
 
     @Override
-    public Result<StorageItemAttributeMap> getMapValue()
+    public Result<StorageAttributeMap> getMapValue()
     {
-        return this.wrongType(StorageItemAttributeMap.class);
+        return this.wrongType(StorageAttributeMap.class);
     }
 
     @Override
