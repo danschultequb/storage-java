@@ -6,23 +6,20 @@ package qub;
 public class Blob
 {
     private final BlobStorage blobStorage;
-    private final String checksumType;
-    private final BitArray checksumValue;
+    private final BlobChecksum checksum;
 
-    private Blob(BlobStorage blobStorage, String checksumType, BitArray checksumValue)
+    private Blob(BlobStorage blobStorage, BlobChecksum checksum)
     {
         PreCondition.assertNotNull(blobStorage, "blobStorage");
-        PreCondition.assertNotNullAndNotEmpty(checksumType, "checksumType");
-        PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
+        PreCondition.assertNotNull(checksum, "checksum");
 
         this.blobStorage = blobStorage;
-        this.checksumType = checksumType;
-        this.checksumValue = checksumValue;
+        this.checksum = checksum;
     }
 
-    public static Blob create(BlobStorage blobStorage, String checksumType, BitArray checksumValue)
+    public static Blob create(BlobStorage blobStorage, BlobChecksum checksum)
     {
-        return new Blob(blobStorage, checksumType, checksumValue);
+        return new Blob(blobStorage, checksum);
     }
 
     /**
@@ -33,14 +30,9 @@ public class Blob
         return this.blobStorage;
     }
 
-    public String getChecksumType()
+    public BlobChecksum getChecksum()
     {
-        return this.checksumType;
-    }
-
-    public BitArray getChecksumValue()
-    {
-        return this.checksumValue;
+        return this.checksum;
     }
 
     /**
@@ -48,7 +40,7 @@ public class Blob
      */
     public Result<Boolean> exists()
     {
-        return this.blobStorage.blobExists(this.checksumType, this.checksumValue);
+        return this.blobStorage.blobExists(this.checksum);
     }
 
     /**
@@ -56,7 +48,7 @@ public class Blob
      */
     public Result<Long> getByteCount()
     {
-        return this.blobStorage.getBlobByteCount(this.checksumType, this.checksumValue);
+        return this.blobStorage.getBlobByteCount(this.checksum);
     }
 
     /**
@@ -64,7 +56,7 @@ public class Blob
      */
     public Result<ByteReadStream> getContents()
     {
-        return this.blobStorage.getBlobContents(this.checksumType, this.checksumValue);
+        return this.blobStorage.getBlobContents(this.checksum);
     }
 
     @Override
@@ -78,7 +70,6 @@ public class Blob
     {
         return rhs != null &&
             this.blobStorage == rhs.blobStorage &&
-            this.checksumType.equalsIgnoreCase(rhs.checksumType) &&
-            this.checksumValue.equals(rhs.checksumValue);
+            this.checksum.equals(rhs.checksum);
     }
 }

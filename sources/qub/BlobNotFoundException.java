@@ -25,7 +25,7 @@ public class BlobNotFoundException extends NotFoundException
     {
         PreCondition.assertNotNull(notFoundBlob, "notFoundBlob");
 
-        return "Could not find a blob for checksum type " + Strings.escapeAndQuote(notFoundBlob.getChecksumType()) + " and checksum value " + Strings.escapeAndQuote(notFoundBlob.getChecksumValue().toHexString()) + ".";
+        return "Could not find a blob with checksum " + notFoundBlob.getChecksum().toString() + ".";
     }
 
     /**

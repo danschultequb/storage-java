@@ -33,8 +33,7 @@ public interface BlobStorageTests
                         final Blob blob = blobStorage.getBlob(checksumType, checksumValue);
                         test.assertNotNull(blob);
                         test.assertSame(blobStorage, blob.getBlobStorage());
-                        test.assertEqual(checksumType.toString(), blob.getChecksumType());
-                        test.assertEqual(checksumValue, blob.getChecksumValue());
+                        test.assertEqual(BlobChecksum.create(checksumType, checksumValue), blob.getChecksum());
                     });
                 };
 
@@ -66,8 +65,7 @@ public interface BlobStorageTests
                         final Blob blob = blobStorage.getBlob(checksumType, checksumValue);
                         test.assertNotNull(blob);
                         test.assertSame(blobStorage, blob.getBlobStorage());
-                        test.assertEqual(checksumType, blob.getChecksumType());
-                        test.assertEqual(checksumValue, blob.getChecksumValue());
+                        test.assertEqual(BlobChecksum.create(checksumType, checksumValue), blob.getChecksum());
                     });
                 };
 
@@ -121,8 +119,8 @@ public interface BlobStorageTests
 
                     final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3 }).await();
 
-                    test.assertEqual("md5", blob.getChecksumType().toLowerCase());
-                    test.assertTrue(blobStorage.blobExists(BlobChecksumType.MD5, blob.getChecksumValue()).await());
+                    test.assertEqual(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromHexString("5289DF737DF57326FCDD22597AFB1FAC")), blob.getChecksum());
+                    test.assertTrue(blobStorage.blobExists(blob.getChecksum()).await());
                 });
             });
 
@@ -161,7 +159,7 @@ public interface BlobStorageTests
 
                     final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3 }).await();
 
-                    test.assertTrue(blobStorage.blobExists(blob.getChecksumType(), blob.getChecksumValue()).await());
+                    test.assertTrue(blobStorage.blobExists(blob.getChecksum()).await());
                 });
             });
 
@@ -180,8 +178,8 @@ public interface BlobStorageTests
                 getBlobByteCountErrorTest.run(null, BitArray.create(3), new PreConditionFailure("checksumType cannot be null."));
                 getBlobByteCountErrorTest.run(BlobChecksumType.MD5, null, new PreConditionFailure("checksumValue cannot be null."));
                 getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob for checksum type \"MD5\" and checksum value \"55\"."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob for checksum type \"MD5\" and checksum value \"E\"."));
+                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob with checksum MD5:55."));
+                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
             });
 
             runner.testGroup("getBlobByteCount(String,BitArray)", () ->
@@ -200,8 +198,8 @@ public interface BlobStorageTests
                 getBlobByteCountErrorTest.run("", BitArray.create(4), new PreConditionFailure("checksumType cannot be empty."));
                 getBlobByteCountErrorTest.run("md5", null, new PreConditionFailure("checksumValue cannot be null."));
                 getBlobByteCountErrorTest.run("MD5", BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
-                getBlobByteCountErrorTest.run("md5", BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob for checksum type \"md5\" and checksum value \"55\"."));
-                getBlobByteCountErrorTest.run("MD5", BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob for checksum type \"MD5\" and checksum value \"E\"."));
+                getBlobByteCountErrorTest.run("md5", BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob with checksum md5:55."));
+                getBlobByteCountErrorTest.run("MD5", BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
             });
 
             runner.testGroup("getBlobContents(BlobChecksumType,BitArray)", () ->
@@ -219,8 +217,8 @@ public interface BlobStorageTests
                 getBlobByteCountErrorTest.run(null, BitArray.create(3), new PreConditionFailure("checksumType cannot be null."));
                 getBlobByteCountErrorTest.run(BlobChecksumType.MD5, null, new PreConditionFailure("checksumValue cannot be null."));
                 getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob for checksum type \"MD5\" and checksum value \"55\"."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob for checksum type \"MD5\" and checksum value \"E\"."));
+                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob with checksum MD5:55."));
+                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
             });
 
             runner.testGroup("getBlobContents(String,BitArray)", () ->
@@ -239,8 +237,8 @@ public interface BlobStorageTests
                 getBlobByteCountErrorTest.run("", BitArray.create(4), new PreConditionFailure("checksumType cannot be empty."));
                 getBlobByteCountErrorTest.run("md5", null, new PreConditionFailure("checksumValue cannot be null."));
                 getBlobByteCountErrorTest.run("MD5", BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
-                getBlobByteCountErrorTest.run("md5", BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob for checksum type \"md5\" and checksum value \"55\"."));
-                getBlobByteCountErrorTest.run("MD5", BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob for checksum type \"MD5\" and checksum value \"E\"."));
+                getBlobByteCountErrorTest.run("md5", BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob with checksum md5:55."));
+                getBlobByteCountErrorTest.run("MD5", BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
             });
 
             runner.testGroup("createBlob(byte[])", () ->
@@ -260,8 +258,7 @@ public interface BlobStorageTests
                     final Blob blob = blobStorage.createBlob(new byte[0]).await();
                     test.assertNotNull(blob);
                     test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual("MD5", blob.getChecksumType());
-                    test.assertEqual("D41D8CD98F00B204E9800998ECF8427E", blob.getChecksumValue().toHexString());
+                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("D41D8CD98F00B204E9800998ECF8427E")), blob.getChecksum());
                     test.assertEqual(0, blob.getByteCount().await());
                     test.assertEqual(new byte[0], blob.getContents().await().readAllBytes().await());
 
@@ -275,8 +272,7 @@ public interface BlobStorageTests
                     final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3, 4, 5 }).await();
                     test.assertNotNull(blob);
                     test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual("MD5", blob.getChecksumType());
-                    test.assertEqual("7CFDD07889B3295D6A550914AB35E068", blob.getChecksumValue().toHexString());
+                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("7CFDD07889B3295D6A550914AB35E068")), blob.getChecksum());
                     test.assertEqual(5, blob.getByteCount().await());
                     test.assertEqual(new byte[] { 1, 2, 3, 4, 5 }, blob.getContents().await().readAllBytes().await());
 
@@ -313,8 +309,7 @@ public interface BlobStorageTests
                     final Blob blob = blobStorage.createBlob(InMemoryByteStream.create().endOfStream()).await();
                     test.assertNotNull(blob);
                     test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual("MD5", blob.getChecksumType());
-                    test.assertEqual("D41D8CD98F00B204E9800998ECF8427E", blob.getChecksumValue().toHexString());
+                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("D41D8CD98F00B204E9800998ECF8427E")), blob.getChecksum());
                     test.assertEqual(0, blob.getByteCount().await());
                     test.assertEqual(new byte[0], blob.getContents().await().readAllBytes().await());
 
@@ -328,8 +323,7 @@ public interface BlobStorageTests
                     final Blob blob = blobStorage.createBlob(InMemoryByteStream.create(new byte[] { 1, 2, 3, 4, 5 }).endOfStream()).await();
                     test.assertNotNull(blob);
                     test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual("MD5", blob.getChecksumType());
-                    test.assertEqual("7CFDD07889B3295D6A550914AB35E068", blob.getChecksumValue().toHexString());
+                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("7CFDD07889B3295D6A550914AB35E068")), blob.getChecksum());
                     test.assertEqual(5, blob.getByteCount().await());
                     test.assertEqual(new byte[] { 1, 2, 3, 4, 5 }, blob.getContents().await().readAllBytes().await());
 
@@ -369,8 +363,7 @@ public interface BlobStorageTests
                     final Blob blob = blobStorage.getOrCreateBlob(new byte[0]).await();
                     test.assertNotNull(blob);
                     test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual("MD5", blob.getChecksumType());
-                    test.assertEqual("D41D8CD98F00B204E9800998ECF8427E", blob.getChecksumValue().toHexString());
+                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("D41D8CD98F00B204E9800998ECF8427E")), blob.getChecksum());
                     test.assertEqual(0, blob.getByteCount().await());
                     test.assertEqual(new byte[0], blob.getContents().await().readAllBytes().await());
 
@@ -384,8 +377,7 @@ public interface BlobStorageTests
                     final Blob blob = blobStorage.getOrCreateBlob(new byte[] { 1, 2, 3, 4, 5 }).await();
                     test.assertNotNull(blob);
                     test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual("MD5", blob.getChecksumType());
-                    test.assertEqual("7CFDD07889B3295D6A550914AB35E068", blob.getChecksumValue().toHexString());
+                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("7CFDD07889B3295D6A550914AB35E068")), blob.getChecksum());
                     test.assertEqual(5, blob.getByteCount().await());
                     test.assertEqual(new byte[] { 1, 2, 3, 4, 5 }, blob.getContents().await().readAllBytes().await());
 
@@ -422,8 +414,7 @@ public interface BlobStorageTests
                     final Blob blob = blobStorage.getOrCreateBlob(InMemoryByteStream.create().endOfStream()).await();
                     test.assertNotNull(blob);
                     test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual("MD5", blob.getChecksumType());
-                    test.assertEqual("D41D8CD98F00B204E9800998ECF8427E", blob.getChecksumValue().toHexString());
+                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("D41D8CD98F00B204E9800998ECF8427E")), blob.getChecksum());
                     test.assertEqual(0, blob.getByteCount().await());
                     test.assertEqual(new byte[0], blob.getContents().await().readAllBytes().await());
 
@@ -437,8 +428,7 @@ public interface BlobStorageTests
                     final Blob blob = blobStorage.getOrCreateBlob(InMemoryByteStream.create(new byte[] { 1, 2, 3, 4, 5 }).endOfStream()).await();
                     test.assertNotNull(blob);
                     test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual("MD5", blob.getChecksumType());
-                    test.assertEqual("7CFDD07889B3295D6A550914AB35E068", blob.getChecksumValue().toHexString());
+                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("7CFDD07889B3295D6A550914AB35E068")), blob.getChecksum());
                     test.assertEqual(5, blob.getByteCount().await());
                     test.assertEqual(new byte[] { 1, 2, 3, 4, 5 }, blob.getContents().await().readAllBytes().await());
 

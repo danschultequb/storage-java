@@ -16,7 +16,7 @@ public interface BlobStorage
         PreCondition.assertNotNull(checksumType, "checksumType");
         PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
 
-        return this.getBlob(checksumType.toString(), checksumValue);
+        return this.getBlob(BlobChecksum.create(checksumType, checksumValue));
     }
 
     /**
@@ -30,7 +30,19 @@ public interface BlobStorage
         PreCondition.assertNotNullAndNotEmpty(checksumType, "checksumType");
         PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
 
-        return Blob.create(this, checksumType, checksumValue);
+        return this.getBlob(BlobChecksum.create(checksumType, checksumValue));
+    }
+
+    /**
+     * Get the {@link Blob} that has the provided checksum.
+     * @param checksum The checksum of the {@link Blob}.
+     * @return The matching {@link Blob}.
+     */
+    public default Blob getBlob(BlobChecksum checksum)
+    {
+        PreCondition.assertNotNull(checksum, "checksum");
+
+        return Blob.create(this, checksum);
     }
 
     /**
@@ -48,7 +60,7 @@ public interface BlobStorage
         PreCondition.assertNotNull(checksumType, "checksumType");
         PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
 
-        return this.blobExists(checksumType.toString(), checksumValue);
+        return this.blobExists(BlobChecksum.create(checksumType, checksumValue));
     }
 
     /**
@@ -56,29 +68,50 @@ public interface BlobStorage
      * @param checksumType The type of checksum algorithm to use.
      * @param checksumValue The value of the blob's checksum.
      */
-    public Result<Boolean> blobExists(String checksumType, BitArray checksumValue);
+    public default Result<Boolean> blobExists(String checksumType, BitArray checksumValue)
+    {
+        PreCondition.assertNotNullAndNotEmpty(checksumType, "checksumType");
+        PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
+
+        return this.blobExists(BlobChecksum.create(checksumType, checksumValue));
+    }
+
+    public Result<Boolean> blobExists(BlobChecksum checksum);
 
     /**
-     * Get the byte count of the blob with the provided checksum.
+     * Get the byte count of the {@link Blob} with the provided checksum.
      * @param checksumType The type of checksum algorithm to use.
-     * @param checksumValue The value of the blob's checksum.
-     * @return The byte count of the blob with the provided checksum.
+     * @param checksumValue The value of the {@link Blob}'s checksum.
+     * @return The byte count of the {@link Blob} with the provided checksum.
      */
     public default Result<Long> getBlobByteCount(BlobChecksumType checksumType, BitArray checksumValue)
     {
         PreCondition.assertNotNull(checksumType, "checksumType");
         PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
 
-        return this.getBlobByteCount(checksumType.toString(), checksumValue);
+        return this.getBlobByteCount(BlobChecksum.create(checksumType, checksumValue));
     }
 
     /**
-     * Get the byte count of the blob with the provided checksum.
+     * Get the byte count of the {@link Blob} with the provided checksum.
      * @param checksumType The type of checksum algorithm to use.
-     * @param checksumValue The value of the blob's checksum.
+     * @param checksumValue The value of the {@link Blob}'s checksum.
+     * @return The byte count of the {@link Blob} with the provided checksum.
+     */
+    public default Result<Long> getBlobByteCount(String checksumType, BitArray checksumValue)
+    {
+        PreCondition.assertNotNull(checksumType, "checksumType");
+        PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
+
+        return this.getBlobByteCount(BlobChecksum.create(checksumType, checksumValue));
+    }
+
+    /**
+     * Get the byte count of the {@link Blob} with the provided {@link BlobChecksum}.
+     * @param checksum The {@link BlobChecksum} of the {@link Blob}.
      * @return The byte count of the blob with the provided checksum.
      */
-    public Result<Long> getBlobByteCount(String checksumType, BitArray checksumValue);
+    public Result<Long> getBlobByteCount(BlobChecksum checksum);
 
     /**
      * Get the byte contents of the blob with the provided checksum.
@@ -91,7 +124,7 @@ public interface BlobStorage
         PreCondition.assertNotNull(checksumType, "checksumType");
         PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
 
-        return this.getBlobContents(checksumType.toString(), checksumValue);
+        return this.getBlobContents(BlobChecksum.create(checksumType, checksumValue));
     }
 
     /**
@@ -100,7 +133,20 @@ public interface BlobStorage
      * @param checksumValue The value of the blob's checksum.
      * @return The byte contents of the blob with the provided checksum.
      */
-    public Result<ByteReadStream> getBlobContents(String checksumType, BitArray checksumValue);
+    public default Result<ByteReadStream> getBlobContents(String checksumType, BitArray checksumValue)
+    {
+        PreCondition.assertNotNull(checksumType, "checksumType");
+        PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
+
+        return this.getBlobContents(BlobChecksum.create(checksumType, checksumValue));
+    }
+
+    /**
+     * Get the byte contents of the {@link Blob} with the provided {@link BlobChecksum}.
+     * @param checksum The {@link BlobChecksum} of the {@link Blob}.
+     * @return The byte contents of the {@link Blob} with the provided {@link BlobChecksum}.
+     */
+    public Result<ByteReadStream> getBlobContents(BlobChecksum checksum);
 
     /**
      * Create a new {@link Blob} from the provided contents.

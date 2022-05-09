@@ -84,7 +84,7 @@ public interface BlobNotFoundExceptionTests
                     final Blob blob = blobStorage.getBlob("a", BitArray.createFromBitString("1"));
 
                     final BlobNotFoundException exception = new BlobNotFoundException(blob);
-                    test.assertEqual("Could not find a blob for checksum type \"a\" and checksum value \"8\".", exception.getMessage());
+                    test.assertEqual("Could not find a blob with checksum a:8.", exception.getMessage());
                     test.assertSame(blob, exception.getNotFoundBlob());
                 });
             });

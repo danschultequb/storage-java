@@ -6,50 +6,28 @@ public interface BlobTests
     {
         runner.testGroup(Blob.class, () ->
         {
-            runner.testGroup("create(BlobStorage,String,BitArray)", () ->
+            runner.testGroup("create(BlobStorage,BlobChecksum)", () ->
             {
                 runner.test("with null BlobStorage", (Test test) ->
                 {
-                    test.assertThrows(() -> Blob.create(null, "md5", BitArray.createFromBitString("1")),
+                    test.assertThrows(() -> Blob.create(null, BlobChecksum.create("md5", BitArray.createFromBitString("1"))),
                         new PreConditionFailure("blobStorage cannot be null."));
                 });
 
-                runner.test("with null checksum type", (Test test) ->
+                runner.test("with null checksum", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    test.assertThrows(() -> Blob.create(blobStorage, null, BitArray.createFromBitString("1")),
-                        new PreConditionFailure("checksumType cannot be null."));
-                });
-
-                runner.test("with empty checksum type", (Test test) ->
-                {
-                    final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    test.assertThrows(() -> Blob.create(blobStorage, "", BitArray.createFromBitString("1")),
-                        new PreConditionFailure("checksumType cannot be empty."));
-                });
-
-                runner.test("with null checksum value", (Test test) ->
-                {
-                    final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    test.assertThrows(() -> Blob.create(blobStorage, "spam", null),
-                        new PreConditionFailure("checksumValue cannot be null."));
-                });
-
-                runner.test("with empty checksum value", (Test test) ->
-                {
-                    final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    test.assertThrows(() -> Blob.create(blobStorage, "spam", BitArray.createFromBitString("")),
-                        new PreConditionFailure("checksumValue cannot be empty."));
+                    test.assertThrows(() -> Blob.create(blobStorage, null),
+                        new PreConditionFailure("checksum cannot be null."));
                 });
 
                 runner.test("with valid arguments", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = Blob.create(blobStorage, "spam", BitArray.createFromBitString("101010"));
+                    final Blob blob = Blob.create(blobStorage, BlobChecksum.create("spam", BitArray.createFromBitString("101010")));
                     test.assertNotNull(blob);
                     test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual("spam", blob.getChecksumType());
-                    test.assertEqual(BitArray.createFromBitString("101010"), blob.getChecksumValue());
+                    test.assertEqual(BlobChecksum.create("spam", BitArray.createFromBitString("101010")), blob.getChecksum());
                 });
             });
 

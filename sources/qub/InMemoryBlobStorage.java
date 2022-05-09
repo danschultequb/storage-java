@@ -2,7 +2,7 @@ package qub;
 
 public class InMemoryBlobStorage implements BlobStorage
 {
-    private final MutableMap<Tuple2<String,BitArray>,byte[]> blobContents;
+    private final MutableMap<BlobChecksum,byte[]> blobContents;
 
     private InMemoryBlobStorage()
     {
@@ -14,31 +14,14 @@ public class InMemoryBlobStorage implements BlobStorage
         return new InMemoryBlobStorage();
     }
 
-    private static Tuple2<String,BitArray> getBlobKey(BlobChecksumType checksumType, BitArray checksumValue)
+    private Result<byte[]> getBlobBytes(BlobChecksum checksum)
     {
-        PreCondition.assertNotNull(checksumType, "checksumType");
-        PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
+        PreCondition.assertNotNull(checksum, "checksum");
 
-        return InMemoryBlobStorage.getBlobKey(checksumType.toString(), checksumValue);
-    }
-
-    private static Tuple2<String,BitArray> getBlobKey(String checksumType, BitArray checksumValue)
-    {
-        PreCondition.assertNotNullAndNotEmpty(checksumType, "checksumType");
-        PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
-
-        return Tuple.create(checksumType.toLowerCase(), checksumValue);
-    }
-
-    private Result<byte[]> getBlobBytes(String checksumType, BitArray checksumValue)
-    {
-        PreCondition.assertNotNullAndNotEmpty(checksumType, "checksumType");
-        PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
-
-        return this.blobContents.get(InMemoryBlobStorage.getBlobKey(checksumType, checksumValue))
+        return this.blobContents.get(checksum)
             .convertError(NotFoundException.class, () ->
             {
-                return new BlobNotFoundException(this.getBlob(checksumType, checksumValue));
+                return new BlobNotFoundException(this.getBlob(checksum));
             });
     }
 
@@ -46,47 +29,44 @@ public class InMemoryBlobStorage implements BlobStorage
     public Iterator<Blob> iterateBlobs()
     {
         return this.blobContents.getKeys().iterate()
-            .map((Tuple2<String,BitArray> blobKey) ->
+            .map((BlobChecksum checksum) ->
             {
-                return Blob.create(this, blobKey.getValue1(), blobKey.getValue2());
+                return Blob.create(this, checksum);
             });
     }
 
     @Override
-    public Result<Boolean> blobExists(String checksumType, BitArray checksumValue)
+    public Result<Boolean> blobExists(BlobChecksum checksum)
     {
-        PreCondition.assertNotNullAndNotEmpty(checksumType, "checksumType");
-        PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
+        PreCondition.assertNotNull(checksum, "checksum");
 
         return Result.create(() ->
         {
-            final byte[] blobBytes = this.getBlobBytes(checksumType, checksumValue).catchError().await();
+            final byte[] blobBytes = this.getBlobBytes(checksum).catchError().await();
             return blobBytes != null;
         });
     }
 
     @Override
-    public Result<Long> getBlobByteCount(String checksumType, BitArray checksumValue)
+    public Result<Long> getBlobByteCount(BlobChecksum checksum)
     {
-        PreCondition.assertNotNullAndNotEmpty(checksumType, "checksumType");
-        PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
+        PreCondition.assertNotNull(checksum, "checksum");
 
         return Result.create(() ->
         {
-            final byte[] blobBytes = this.getBlobBytes(checksumType, checksumValue).await();
+            final byte[] blobBytes = this.getBlobBytes(checksum).await();
             return (long)blobBytes.length;
         });
     }
 
     @Override
-    public Result<ByteReadStream> getBlobContents(String checksumType, BitArray checksumValue)
+    public Result<ByteReadStream> getBlobContents(BlobChecksum checksum)
     {
-        PreCondition.assertNotNullAndNotEmpty(checksumType, "checksumType");
-        PreCondition.assertNotNullAndNotEmpty(checksumValue, "checksumValue");
+        PreCondition.assertNotNull(checksum, "checksum");
 
         return Result.create(() ->
         {
-            final byte[] blobBytes = this.getBlobBytes(checksumType, checksumValue).await();
+            final byte[] blobBytes = this.getBlobBytes(checksum).await();
             return InMemoryByteStream.create(blobBytes).endOfStream();
         });
     }
@@ -102,13 +82,13 @@ public class InMemoryBlobStorage implements BlobStorage
 
             final BlobChecksumType checksumType = BlobChecksumType.MD5;
             final BitArray checksumValue = MD5.hash(blobBytes).await();
-            final Tuple2<String,BitArray> blobKey = InMemoryBlobStorage.getBlobKey(checksumType, checksumValue);
+            final BlobChecksum checksum = BlobChecksum.create(checksumType, checksumValue);
 
-            if (this.blobContents.containsKey(blobKey))
+            if (this.blobContents.containsKey(checksum))
             {
                 throw new BlobAlreadyExistsException(this.getBlob(checksumType, checksumValue));
             }
-            this.blobContents.set(blobKey, blobBytes);
+            this.blobContents.set(checksum, blobBytes);
 
             return this.getBlob(checksumType, checksumValue);
         });
