@@ -37,7 +37,7 @@ public interface BlobTests
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
 
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("101010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("101010")));
                     test.assertFalse(blob.exists().await());
                 });
 
@@ -56,7 +56,7 @@ public interface BlobTests
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
 
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("101010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("101010")));
                     test.assertThrows(() -> blob.getByteCount().await(),
                         new BlobNotFoundException(blob));
                 });
@@ -84,7 +84,7 @@ public interface BlobTests
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
 
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("101010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("101010")));
                     test.assertThrows(() -> blob.getContents().await(),
                         new BlobNotFoundException(blob));
                 });
@@ -119,63 +119,63 @@ public interface BlobTests
                 runner.test("with null", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
                     test.assertFalse(blob.equals((Object)null));
                 });
 
                 runner.test("with non-Blob type", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
                     test.assertFalse(blob.equals((Object)"hello"));
                 });
 
                 runner.test("with different blobStorage", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
 
                     final InMemoryBlobStorage blobStorage2 = InMemoryBlobStorage.create();
-                    final Blob blob2 = blobStorage2.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob2 = blobStorage2.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
                     test.assertFalse(blob.equals((Object)blob2));
                 });
 
                 runner.test("with different checksumType", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
-                    final Blob blob2 = blobStorage.getBlob("spam2", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
+                    final Blob blob2 = blobStorage.getBlob(BlobChecksum.create("spam2", BitArray.createFromBitString("1010")));
                     test.assertFalse(blob.equals((Object)blob2));
                 });
 
                 runner.test("with different checksumType case", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
-                    final Blob blob2 = blobStorage.getBlob("SPAM", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
+                    final Blob blob2 = blobStorage.getBlob(BlobChecksum.create("SPAM", BitArray.createFromBitString("1010")));
                     test.assertTrue(blob.equals((Object)blob2));
                 });
 
                 runner.test("with different checksumValue", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
-                    final Blob blob2 = blobStorage.getBlob("spam", BitArray.createFromBitString("10101"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
+                    final Blob blob2 = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("10101")));
                     test.assertFalse(blob.equals((Object)blob2));
                 });
 
                 runner.test("with equal Blob", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
-                    final Blob blob2 = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
+                    final Blob blob2 = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
                     test.assertTrue(blob.equals((Object)blob2));
                 });
 
                 runner.test("with same Blob", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
                     test.assertTrue(blob.equals((Object)blob));
                 });
             });
@@ -185,56 +185,56 @@ public interface BlobTests
                 runner.test("with null", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
                     test.assertFalse(blob.equals((Blob)null));
                 });
 
                 runner.test("with different blobStorage", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
 
                     final InMemoryBlobStorage blobStorage2 = InMemoryBlobStorage.create();
-                    final Blob blob2 = blobStorage2.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob2 = blobStorage2.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
                     test.assertFalse(blob.equals(blob2));
                 });
 
                 runner.test("with different checksumType", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
-                    final Blob blob2 = blobStorage.getBlob("spam2", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
+                    final Blob blob2 = blobStorage.getBlob(BlobChecksum.create("spam2", BitArray.createFromBitString("1010")));
                     test.assertFalse(blob.equals(blob2));
                 });
 
                 runner.test("with different checksumType case", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
-                    final Blob blob2 = blobStorage.getBlob("SPAM", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
+                    final Blob blob2 = blobStorage.getBlob(BlobChecksum.create("SPAM", BitArray.createFromBitString("1010")));
                     test.assertTrue(blob.equals(blob2));
                 });
 
                 runner.test("with different checksumValue", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
-                    final Blob blob2 = blobStorage.getBlob("spam", BitArray.createFromBitString("10101"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
+                    final Blob blob2 = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("10101")));
                     test.assertFalse(blob.equals(blob2));
                 });
 
                 runner.test("with equal Blob", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
-                    final Blob blob2 = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
+                    final Blob blob2 = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
                     test.assertTrue(blob.equals(blob2));
                 });
 
                 runner.test("with same Blob", (Test test) ->
                 {
                     final InMemoryBlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("spam", BitArray.createFromBitString("1010"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("spam", BitArray.createFromBitString("1010")));
                     test.assertTrue(blob.equals(blob));
                 });
             });

@@ -11,7 +11,7 @@ public interface BlobNotFoundExceptionTests
                 runner.test("with null message and non-null Blob", (Test test) ->
                 {
                     final BlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("a", BitArray.createFromBitString("1"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("a", BitArray.createFromBitString("1")));
 
                     final BlobNotFoundException exception = new BlobNotFoundException(null, blob);
                     test.assertNull(exception.getMessage());
@@ -21,7 +21,7 @@ public interface BlobNotFoundExceptionTests
                 runner.test("with empty message and non-null Blob", (Test test) ->
                 {
                     final BlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("a", BitArray.createFromBitString("1"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("a", BitArray.createFromBitString("1")));
 
                     final BlobNotFoundException exception = new BlobNotFoundException("", blob);
                     test.assertEqual("", exception.getMessage());
@@ -38,7 +38,7 @@ public interface BlobNotFoundExceptionTests
                 runner.test("with non-empty message and non-null blob", (Test test) ->
                 {
                     final BlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("a", BitArray.createFromBitString("1"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("a", BitArray.createFromBitString("1")));
 
                     final BlobNotFoundException exception = new BlobNotFoundException("abc", blob);
                     test.assertEqual("abc", exception.getMessage());
@@ -81,7 +81,7 @@ public interface BlobNotFoundExceptionTests
                 runner.test("with non-null blob", (Test test) ->
                 {
                     final BlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("a", BitArray.createFromBitString("1"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("a", BitArray.createFromBitString("1")));
 
                     final BlobNotFoundException exception = new BlobNotFoundException(blob);
                     test.assertEqual("Could not find a blob with checksum a:8.", exception.getMessage());

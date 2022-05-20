@@ -17,7 +17,7 @@ public interface BlobAlreadyExistsExceptionTests
                 runner.test("with non-null", (Test test) ->
                 {
                     final BlobStorage blobStorage = InMemoryBlobStorage.create();
-                    final Blob blob = blobStorage.getBlob("a", BitArray.createFromBitString("1"));
+                    final Blob blob = blobStorage.getBlob(BlobChecksum.create("a", BitArray.createFromBitString("1")));
 
                     final BlobAlreadyExistsException exception = new BlobAlreadyExistsException(blob);
                     test.assertEqual("A blob already exists for the provided contents.", exception.getMessage());

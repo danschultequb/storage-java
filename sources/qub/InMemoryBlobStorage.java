@@ -86,11 +86,11 @@ public class InMemoryBlobStorage implements BlobStorage
 
             if (this.blobContents.containsKey(checksum))
             {
-                throw new BlobAlreadyExistsException(this.getBlob(checksumType, checksumValue));
+                throw new BlobAlreadyExistsException(this.getBlob(checksum));
             }
             this.blobContents.set(checksum, blobBytes);
 
-            return this.getBlob(checksumType, checksumValue);
+            return this.getBlob(checksum);
         });
     }
 }

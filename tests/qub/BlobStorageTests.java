@@ -9,68 +9,34 @@ public interface BlobStorageTests
 
         runner.testGroup(BlobStorage.class, () ->
         {
-            runner.testGroup("getBlob(BlobChecksumType,BitArray)", () ->
+            runner.testGroup("getBlob(BlobChecksum)", () ->
             {
-                final Action3<BlobChecksumType,BitArray,Throwable> getBlobErrorTest = (BlobChecksumType checksumType, BitArray checksumValue, Throwable expected) ->
+                final Action2<BlobChecksum,Throwable> getBlobErrorTest = (BlobChecksum checksum, Throwable expected) ->
                 {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
+                    runner.test("with " + checksum, (Test test) ->
                     {
                         final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.getBlob(checksumType, checksumValue),
+                        test.assertThrows(() -> blobStorage.getBlob(checksum),
                             expected);
                     });
                 };
 
-                getBlobErrorTest.run(null, BitArray.create(5), new PreConditionFailure("checksumType cannot be null."));
-                getBlobErrorTest.run(BlobChecksumType.MD5, null, new PreConditionFailure("checksumValue cannot be null."));
-                getBlobErrorTest.run(BlobChecksumType.MD5, BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
+                getBlobErrorTest.run(null, new PreConditionFailure("checksum cannot be null."));
 
-                final Action2<BlobChecksumType,BitArray> getBlobTest = (BlobChecksumType checksumType, BitArray checksumValue) ->
+                final Action1<BlobChecksum> getBlobTest = (BlobChecksum checksum) ->
                 {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
+                    runner.test("with " + checksum, (Test test) ->
                     {
                         final BlobStorage blobStorage = creator.run();
-                        final Blob blob = blobStorage.getBlob(checksumType, checksumValue);
+                        final Blob blob = blobStorage.getBlob(checksum);
                         test.assertNotNull(blob);
                         test.assertSame(blobStorage, blob.getBlobStorage());
-                        test.assertEqual(BlobChecksum.create(checksumType, checksumValue), blob.getChecksum());
+                        test.assertEqual(checksum, blob.getChecksum());
                     });
                 };
 
-                getBlobTest.run(BlobChecksumType.MD5, BitArray.create(5));
-            });
-
-            runner.testGroup("getBlob(String,BitArray)", () ->
-            {
-                final Action3<String,BitArray,Throwable> getBlobErrorTest = (String checksumType, BitArray checksumValue, Throwable expected) ->
-                {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
-                    {
-                        final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.getBlob(checksumType, checksumValue),
-                            expected);
-                    });
-                };
-
-                getBlobErrorTest.run(null, BitArray.create(3), new PreConditionFailure("checksumType cannot be null."));
-                getBlobErrorTest.run("", BitArray.create(4), new PreConditionFailure("checksumType cannot be empty."));
-                getBlobErrorTest.run("md5", null, new PreConditionFailure("checksumValue cannot be null."));
-                getBlobErrorTest.run("MD5", BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
-
-                final Action2<String,BitArray> getBlobTest = (String checksumType, BitArray checksumValue) ->
-                {
-                    runner.test("with " + English.andList(Iterable.create(checksumType, checksumValue).map(Strings::escapeAndQuote)), (Test test) ->
-                    {
-                        final BlobStorage blobStorage = creator.run();
-                        final Blob blob = blobStorage.getBlob(checksumType, checksumValue);
-                        test.assertNotNull(blob);
-                        test.assertSame(blobStorage, blob.getBlobStorage());
-                        test.assertEqual(BlobChecksum.create(checksumType, checksumValue), blob.getChecksum());
-                    });
-                };
-
-                getBlobTest.run("md5", BitArray.create(5));
-                getBlobTest.run("MD5", BitArray.createFromBitString("01100"));
+                getBlobTest.run(BlobChecksum.create("md5", BitArray.create(5)));
+                getBlobTest.run(BlobChecksum.create("MD5", BitArray.createFromBitString("01100")));
             });
 
             runner.testGroup("iterateBlobs()", () ->
@@ -85,33 +51,31 @@ public interface BlobStorageTests
                 });
             });
 
-            runner.testGroup("blobExists(BlobChecksumType,BitArray)", () ->
+            runner.testGroup("blobExists(BlobChecksum)", () ->
             {
-                final Action3<BlobChecksumType,BitArray,Throwable> blobExistsErrorTest = (BlobChecksumType checksumType, BitArray checksumValue, Throwable expected) ->
+                final Action2<BlobChecksum,Throwable> blobExistsErrorTest = (BlobChecksum checksum, Throwable expected) ->
                 {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
+                    runner.test("with " + checksum, (Test test) ->
                     {
                         final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.blobExists(checksumType, checksumValue).await(),
+                        test.assertThrows(() -> blobStorage.blobExists(checksum).await(),
                             expected);
                     });
                 };
 
-                blobExistsErrorTest.run(null, BitArray.create(3), new PreConditionFailure("checksumType cannot be null."));
-                blobExistsErrorTest.run(BlobChecksumType.MD5, null, new PreConditionFailure("checksumValue cannot be null."));
-                blobExistsErrorTest.run(BlobChecksumType.MD5, BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
+                blobExistsErrorTest.run(null, new PreConditionFailure("checksum cannot be null."));
 
-                final Action2<BlobChecksumType,BitArray> blobExistsTest = (BlobChecksumType checksumType, BitArray checksumValue) ->
+                final Action1<BlobChecksum> blobExistsTest = (BlobChecksum checksum) ->
                 {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
+                    runner.test("with " + checksum, (Test test) ->
                     {
                         final BlobStorage blobStorage = creator.run();
-                        test.assertFalse(blobStorage.blobExists(checksumType, checksumValue).await());
+                        test.assertFalse(blobStorage.blobExists(checksum).await());
                     });
                 };
 
-                blobExistsTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("01010101"));
-                blobExistsTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("111"));
+                blobExistsTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("01010101")));
+                blobExistsTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("111")));
 
                 runner.test("with existing blob", (Test test) ->
                 {
@@ -124,121 +88,38 @@ public interface BlobStorageTests
                 });
             });
 
-            runner.testGroup("blobExists(String,BitArray)", () ->
+            runner.testGroup("getBlobByteCount(BlobChecksum)", () ->
             {
-                final Action3<String,BitArray,Throwable> blobExistsErrorTest = (String checksumType, BitArray checksumValue, Throwable expected) ->
+                final Action2<BlobChecksum,Throwable> getBlobByteCountErrorTest = (BlobChecksum checksum, Throwable expected) ->
                 {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
+                    runner.test("with " + checksum, (Test test) ->
                     {
                         final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.blobExists(checksumType, checksumValue).await(),
+                        test.assertThrows(() -> blobStorage.getBlobByteCount(checksum).await(),
                             expected);
                     });
                 };
 
-                blobExistsErrorTest.run(null, BitArray.create(3), new PreConditionFailure("checksumType cannot be null."));
-                blobExistsErrorTest.run("", BitArray.create(4), new PreConditionFailure("checksumType cannot be empty."));
-                blobExistsErrorTest.run("md5", null, new PreConditionFailure("checksumValue cannot be null."));
-                blobExistsErrorTest.run("MD5", BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
-
-                final Action2<String,BitArray> blobExistsTest = (String checksumType, BitArray checksumValue) ->
-                {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
-                    {
-                        final BlobStorage blobStorage = creator.run();
-                        test.assertFalse(blobStorage.blobExists(checksumType, checksumValue).await());
-                    });
-                };
-
-                blobExistsTest.run("md5", BitArray.createFromBitString("01010101"));
-                blobExistsTest.run("MD5", BitArray.createFromBitString("111"));
-
-                runner.test("with existing blob", (Test test) ->
-                {
-                    final BlobStorage blobStorage = creator.run();
-
-                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3 }).await();
-
-                    test.assertTrue(blobStorage.blobExists(blob.getChecksum()).await());
-                });
+                getBlobByteCountErrorTest.run(null, new PreConditionFailure("checksum cannot be null."));
+                getBlobByteCountErrorTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("01010101")), new BlobNotFoundException("Could not find a blob with checksum MD5:55."));
+                getBlobByteCountErrorTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("111")), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
             });
 
-            runner.testGroup("getBlobByteCount(BlobChecksumType,BitArray)", () ->
+            runner.testGroup("getBlobContents(BlobChecksum)", () ->
             {
-                final Action3<BlobChecksumType,BitArray,Throwable> getBlobByteCountErrorTest = (BlobChecksumType checksumType, BitArray checksumValue, Throwable expected) ->
+                final Action2<BlobChecksum,Throwable> getBlobByteCountErrorTest = (BlobChecksum checksum, Throwable expected) ->
                 {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
+                    runner.test("with " + checksum, (Test test) ->
                     {
                         final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.getBlobByteCount(checksumType, checksumValue).await(),
+                        test.assertThrows(() -> blobStorage.getBlobContents(checksum).await(),
                             expected);
                     });
                 };
 
-                getBlobByteCountErrorTest.run(null, BitArray.create(3), new PreConditionFailure("checksumType cannot be null."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, null, new PreConditionFailure("checksumValue cannot be null."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob with checksum MD5:55."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
-            });
-
-            runner.testGroup("getBlobByteCount(String,BitArray)", () ->
-            {
-                final Action3<String,BitArray,Throwable> getBlobByteCountErrorTest = (String checksumType, BitArray checksumValue, Throwable expected) ->
-                {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
-                    {
-                        final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.getBlobByteCount(checksumType, checksumValue).await(),
-                            expected);
-                    });
-                };
-
-                getBlobByteCountErrorTest.run(null, BitArray.create(3), new PreConditionFailure("checksumType cannot be null."));
-                getBlobByteCountErrorTest.run("", BitArray.create(4), new PreConditionFailure("checksumType cannot be empty."));
-                getBlobByteCountErrorTest.run("md5", null, new PreConditionFailure("checksumValue cannot be null."));
-                getBlobByteCountErrorTest.run("MD5", BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
-                getBlobByteCountErrorTest.run("md5", BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob with checksum md5:55."));
-                getBlobByteCountErrorTest.run("MD5", BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
-            });
-
-            runner.testGroup("getBlobContents(BlobChecksumType,BitArray)", () ->
-            {
-                final Action3<BlobChecksumType,BitArray,Throwable> getBlobByteCountErrorTest = (BlobChecksumType checksumType, BitArray checksumValue, Throwable expected) ->
-                {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
-                    {
-                        final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.getBlobContents(checksumType, checksumValue).await(),
-                            expected);
-                    });
-                };
-
-                getBlobByteCountErrorTest.run(null, BitArray.create(3), new PreConditionFailure("checksumType cannot be null."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, null, new PreConditionFailure("checksumValue cannot be null."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob with checksum MD5:55."));
-                getBlobByteCountErrorTest.run(BlobChecksumType.MD5, BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
-            });
-
-            runner.testGroup("getBlobContents(String,BitArray)", () ->
-            {
-                final Action3<String,BitArray,Throwable> getBlobByteCountErrorTest = (String checksumType, BitArray checksumValue, Throwable expected) ->
-                {
-                    runner.test("with " + English.andList(checksumType, Strings.escapeAndQuote(checksumValue)), (Test test) ->
-                    {
-                        final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.getBlobContents(checksumType, checksumValue).await(),
-                            expected);
-                    });
-                };
-
-                getBlobByteCountErrorTest.run(null, BitArray.create(3), new PreConditionFailure("checksumType cannot be null."));
-                getBlobByteCountErrorTest.run("", BitArray.create(4), new PreConditionFailure("checksumType cannot be empty."));
-                getBlobByteCountErrorTest.run("md5", null, new PreConditionFailure("checksumValue cannot be null."));
-                getBlobByteCountErrorTest.run("MD5", BitArray.create(0), new PreConditionFailure("checksumValue cannot be empty."));
-                getBlobByteCountErrorTest.run("md5", BitArray.createFromBitString("01010101"), new BlobNotFoundException("Could not find a blob with checksum md5:55."));
-                getBlobByteCountErrorTest.run("MD5", BitArray.createFromBitString("111"), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
+                getBlobByteCountErrorTest.run(null, new PreConditionFailure("checksum cannot be null."));
+                getBlobByteCountErrorTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("01010101")), new BlobNotFoundException("Could not find a blob with checksum MD5:55."));
+                getBlobByteCountErrorTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("111")), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
             });
 
             runner.testGroup("createBlob(byte[])", () ->
@@ -342,9 +223,6 @@ public interface BlobStorageTests
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
                 });
             });
-
-
-
 
             runner.testGroup("getOrCreateBlob(byte[])", () ->
             {
