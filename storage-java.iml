@@ -13,26 +13,26 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://C:/qub/qub/md5-java/versions/2/md5-java.jar!/"/>
-          <root url="jar://C:/qub/qub/md5-java/versions/2/md5-java.tests.jar!/"/>
+          <root url="jar://C:/qub/qub/lib-java/versions/207/lib-java.jar!/"/>
+          <root url="jar://C:/qub/qub/lib-java/versions/207/lib-java.tests.jar!/"/>
         </CLASSES>
         <JAVADOC/>
         <SOURCES>
-          <root url="jar://C:/qub/qub/md5-java/versions/2/md5-java-sources.jar!/"/>
-          <root url="jar://C:/qub/qub/md5-java/versions/2/md5-java.test-sources.jar!/"/>
+          <root url="jar://C:/qub/qub/lib-java/versions/207/lib-java-sources.jar!/"/>
+          <root url="jar://C:/qub/qub/lib-java/versions/207/lib-java.test-sources.jar!/"/>
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://C:/qub/qub/lib-java/versions/186/lib-java.jar!/"/>
-          <root url="jar://C:/qub/qub/lib-java/versions/186/lib-java.tests.jar!/"/>
+          <root url="jar://C:/qub/qub/hash-java/versions/4/hash-java.jar!/"/>
+          <root url="jar://C:/qub/qub/hash-java/versions/4/hash-java.tests.jar!/"/>
         </CLASSES>
         <JAVADOC/>
         <SOURCES>
-          <root url="jar://C:/qub/qub/lib-java/versions/186/lib-java-sources.jar!/"/>
-          <root url="jar://C:/qub/qub/lib-java/versions/186/lib-java.tests-sources.jar!/"/>
+          <root url="jar://C:/qub/qub/hash-java/versions/4/hash-java-sources.jar!/"/>
+          <root url="jar://C:/qub/qub/hash-java/versions/4/hash-java.test-sources.jar!/"/>
         </SOURCES>
       </library>
     </orderEntry>

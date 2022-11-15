@@ -6,11 +6,14 @@ public class BlobAlreadyExistsException extends AlreadyExistsException
 
     public BlobAlreadyExistsException(Blob alreadyExistingBlob)
     {
-        super("A blob already exists for the provided contents.");
-
-        PreCondition.assertNotNull(alreadyExistingBlob, "alreadyExistingBlob");
+        super("A blob already exists with the provided contents.");
 
         this.alreadyExistingBlob = alreadyExistingBlob;
+    }
+
+    public BlobAlreadyExistsException()
+    {
+        this(null);
     }
 
     /**

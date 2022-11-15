@@ -1,73 +1,159 @@
 package qub;
 
+/**
+ * A {@link BlobStorage} implementation that is completely in-memory.
+ */
 public class InMemoryBlobStorage implements BlobStorage
 {
-    private final MutableMap<BlobChecksum,byte[]> blobContents;
+    private MutableMap<BlobId,byte[]> blobIdToContentsMap;
+    private final List<Function0<? extends BlobIdElementCreator>> blobIdElementCreatorFunctions;
 
     private InMemoryBlobStorage()
     {
-        this.blobContents = Map.create();
+        this.blobIdToContentsMap = MutableMap.create();
+        this.blobIdElementCreatorFunctions = List.create();
     }
 
+    /**
+     * Create a new {@link InMemoryBlobStorage} object.
+     */
     public static InMemoryBlobStorage create()
     {
         return new InMemoryBlobStorage();
     }
 
-    private Result<byte[]> getBlobBytes(BlobChecksum checksum)
+    @Override
+    public Result<Integer> getBlobCount()
     {
-        PreCondition.assertNotNull(checksum, "checksum");
+        return Result.create(() ->
+        {
+            return this.blobIdToContentsMap.getCount();
+        });
+    }
 
-        return this.blobContents.get(checksum)
-            .convertError(NotFoundException.class, () ->
+    /**
+     * Get the number of {@link BlobIdElementCreator}s that have been registered with this
+     * {@link InMemoryBlobStorage}.
+     */
+    public int getBlobIdElementCreatorCount()
+    {
+        return this.blobIdElementCreatorFunctions.getCount();
+    }
+
+    /**
+     * Add a new {@link BlobIdElement} type to this {@link InMemoryBlobStorage}. This function will
+     * update all the existing {@link Blob}s in this {@link InMemoryBlobStorage} to include the
+     * latest {@link BlobIdElement} that this new {@link Function0} adds.
+     * @param blobIdElementCreatorFunction The new {@link BlobIdElementCreator} {@link Function0} to
+     *                                     add.
+     */
+    public Result<Void> addBlobIdElementCreatorFunction(Function0<? extends BlobIdElementCreator> blobIdElementCreatorFunction)
+    {
+        PreCondition.assertNotNull(blobIdElementCreatorFunction, "blobIdElementCreatorFunction");
+
+        return Result.create(() ->
+        {
+            this.blobIdElementCreatorFunctions.add(blobIdElementCreatorFunction);
+
+            final MutableMap<BlobId,byte[]> newBlobIdToContentsMap = Map.create();
+            for (final byte[] contents : this.blobIdToContentsMap.iterateValues())
             {
-                return new BlobNotFoundException(this.getBlob(checksum));
-            });
+                final BlobId newBlobId = this.generateBlobId(contents).await();
+                newBlobIdToContentsMap.set(newBlobId, contents);
+            }
+
+            this.blobIdToContentsMap = newBlobIdToContentsMap;
+        });
+    }
+
+    @Override
+    public Result<Boolean> blobExists(BlobId blobId)
+    {
+        BlobStorage.assertNotNullAndNotEmpty(blobId, "blobId");
+
+        return Result.create(() ->
+        {
+            return this.blobIdToContentsMap.containsKey(blobId);
+        });
     }
 
     @Override
     public Iterator<Blob> iterateBlobs()
     {
-        return this.blobContents.getKeys().iterate()
-            .map((BlobChecksum checksum) ->
+        return this.blobIdToContentsMap.iterateKeys()
+            .map(this::getBlob);
+    }
+
+    private Result<byte[]> getBlobContentsArray(BlobId blobId)
+    {
+        BlobStorage.assertNotNullAndNotEmpty(blobId, "blobId");
+
+        return this.blobIdToContentsMap.get(blobId)
+            .convertError(NotFoundException.class, () -> new BlobNotFoundException(this.getBlob(blobId)));
+    }
+
+    @Override
+    public Result<Long> getBlobByteCount(BlobId blobId)
+    {
+        BlobStorage.assertNotNullAndNotEmpty(blobId, "blobId");
+
+        return Result.create(() ->
+        {
+            final byte[] blobContents = this.getBlobContentsArray(blobId).await();
+            final long result = blobContents.length;
+
+            PostCondition.assertGreaterThanOrEqualTo(result, 0, "result");
+
+            return result;
+        });
+    }
+
+    @Override
+    public Result<ByteReadStream> getBlobContents(BlobId blobId)
+    {
+        BlobStorage.assertNotNullAndNotEmpty(blobId, "blobId");
+
+        return Result.create(() ->
+        {
+            final byte[] blobContents = this.getBlobContentsArray(blobId).await();
+            return InMemoryByteStream.create(blobContents).endOfStream();
+        });
+    }
+
+    private Result<BlobId> generateBlobId(byte[] blobContents)
+    {
+        return Result.create(() ->
+        {
+            BlobId result;
+            try (final InMemoryByteStream blobContentsStream = InMemoryByteStream.create(blobContents).endOfStream())
             {
-                return Blob.create(this, checksum);
-            });
-    }
+                final Tuple2<BlobId,byte[]> blobIdAndContents = this.generateBlobId(blobContentsStream).await();
+                result = blobIdAndContents.getValue1();
+            }
 
-    @Override
-    public Result<Boolean> blobExists(BlobChecksum checksum)
-    {
-        PreCondition.assertNotNull(checksum, "checksum");
+            PostCondition.assertNotNull(result, "result");
 
-        return Result.create(() ->
-        {
-            final byte[] blobBytes = this.getBlobBytes(checksum).catchError().await();
-            return blobBytes != null;
+            return result;
         });
     }
 
-    @Override
-    public Result<Long> getBlobByteCount(BlobChecksum checksum)
+    private Result<Tuple2<BlobId,byte[]>> generateBlobId(ByteReadStream blobContents)
     {
-        PreCondition.assertNotNull(checksum, "checksum");
-
         return Result.create(() ->
         {
-            final byte[] blobBytes = this.getBlobBytes(checksum).await();
-            return (long)blobBytes.length;
-        });
-    }
+            Tuple2<BlobId,byte[]> result;
 
-    @Override
-    public Result<ByteReadStream> getBlobContents(BlobChecksum checksum)
-    {
-        PreCondition.assertNotNull(checksum, "checksum");
+            final Iterable<? extends BlobIdElementCreator> blobIdElementCreators = this.blobIdElementCreatorFunctions.map(Function0::run).toList();
+            try (final BlobIdCreatorByteReadStream blobIdReadStream = BlobIdCreatorByteReadStream.create(blobContents, blobIdElementCreators))
+            {
+                final byte[] blobContentsArray = blobIdReadStream.readAllBytes().await();
+                final BlobId blobId = blobIdReadStream.takeBlobId();
+                result = Tuple.create(blobId, blobContentsArray);
+            }
 
-        return Result.create(() ->
-        {
-            final byte[] blobBytes = this.getBlobBytes(checksum).await();
-            return InMemoryByteStream.create(blobBytes).endOfStream();
+            PostCondition.assertNotNull(result, "result");
+
+            return result;
         });
     }
 
@@ -78,19 +164,21 @@ public class InMemoryBlobStorage implements BlobStorage
 
         return Result.create(() ->
         {
-            final byte[] blobBytes = blobContents.readAllBytes().await();
+            final Tuple2<BlobId,byte[]> blobIdAndContents = this.generateBlobId(blobContents).await();
+            final byte[] blobContentsArray = blobIdAndContents.getValue2();
+            final BlobId blobId = blobIdAndContents.getValue1();
 
-            final BlobChecksumType checksumType = BlobChecksumType.MD5;
-            final BitArray checksumValue = MD5.hash(blobBytes).await();
-            final BlobChecksum checksum = BlobChecksum.create(checksumType, checksumValue);
-
-            if (this.blobContents.containsKey(checksum))
+            if (this.blobIdToContentsMap.containsKey(blobId))
             {
-                throw new BlobAlreadyExistsException(this.getBlob(checksum));
+                throw new BlobAlreadyExistsException(this.getBlob(blobId));
             }
-            this.blobContents.set(checksum, blobBytes);
+            this.blobIdToContentsMap.set(blobId, blobContentsArray);
 
-            return this.getBlob(checksum);
+            final Blob result = this.getBlob(blobId);
+
+            PostCondition.assertNotNull(result, "result");
+
+            return result;
         });
     }
 }

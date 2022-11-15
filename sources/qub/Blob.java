@@ -1,25 +1,25 @@
 package qub;
 
 /**
- * An object that provides access to a Binary Large OBject (BLOB).
+ * An object that references a Binary Large OBject (BLOB) in a {@link BlobStorage}.
  */
 public class Blob
 {
     private final BlobStorage blobStorage;
-    private final BlobChecksum checksum;
+    private final BlobId blobId;
 
-    private Blob(BlobStorage blobStorage, BlobChecksum checksum)
+    private Blob(BlobStorage blobStorage, BlobId blobId)
     {
         PreCondition.assertNotNull(blobStorage, "blobStorage");
-        PreCondition.assertNotNull(checksum, "checksum");
+        BlobStorage.assertNotNullAndNotEmpty(blobId, "blobId");
 
         this.blobStorage = blobStorage;
-        this.checksum = checksum;
+        this.blobId = blobId;
     }
 
-    public static Blob create(BlobStorage blobStorage, BlobChecksum checksum)
+    public static Blob create(BlobStorage blobStorage, BlobId blobId)
     {
-        return new Blob(blobStorage, checksum);
+        return new Blob(blobStorage, blobId);
     }
 
     /**
@@ -30,9 +30,12 @@ public class Blob
         return this.blobStorage;
     }
 
-    public BlobChecksum getChecksum()
+    /**
+     * Get the {@link BlobId} that identifies this {@link Blob}.
+     */
+    public BlobId getId()
     {
-        return this.checksum;
+        return this.blobId;
     }
 
     /**
@@ -40,7 +43,7 @@ public class Blob
      */
     public Result<Boolean> exists()
     {
-        return this.blobStorage.blobExists(this.checksum);
+        return this.blobStorage.blobExists(this.blobId);
     }
 
     /**
@@ -48,7 +51,7 @@ public class Blob
      */
     public Result<Long> getByteCount()
     {
-        return this.blobStorage.getBlobByteCount(this.checksum);
+        return this.blobStorage.getBlobByteCount(this.blobId);
     }
 
     /**
@@ -56,7 +59,7 @@ public class Blob
      */
     public Result<ByteReadStream> getContents()
     {
-        return this.blobStorage.getBlobContents(this.checksum);
+        return this.blobStorage.getBlobContents(this.blobId);
     }
 
     @Override
@@ -66,10 +69,15 @@ public class Blob
             this.equals((Blob)rhs);
     }
 
+    /**
+     * Get whether this {@link Blob} equals the provided {@link Blob}. This means that both
+     * {@link Blob}s come from the same {@link BlobStorage} and have the same {@link BlobIdElement}.
+     * @param rhs The {@link Blob} to compare to this {@link Blob}.
+     */
     public boolean equals(Blob rhs)
     {
         return rhs != null &&
             this.blobStorage == rhs.blobStorage &&
-            this.checksum.equals(rhs.checksum);
+            this.blobId.equals(rhs.blobId);
     }
 }

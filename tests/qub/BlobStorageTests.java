@@ -9,36 +9,6 @@ public interface BlobStorageTests
 
         runner.testGroup(BlobStorage.class, () ->
         {
-            runner.testGroup("getBlob(BlobChecksum)", () ->
-            {
-                final Action2<BlobChecksum,Throwable> getBlobErrorTest = (BlobChecksum checksum, Throwable expected) ->
-                {
-                    runner.test("with " + checksum, (Test test) ->
-                    {
-                        final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.getBlob(checksum),
-                            expected);
-                    });
-                };
-
-                getBlobErrorTest.run(null, new PreConditionFailure("checksum cannot be null."));
-
-                final Action1<BlobChecksum> getBlobTest = (BlobChecksum checksum) ->
-                {
-                    runner.test("with " + checksum, (Test test) ->
-                    {
-                        final BlobStorage blobStorage = creator.run();
-                        final Blob blob = blobStorage.getBlob(checksum);
-                        test.assertNotNull(blob);
-                        test.assertSame(blobStorage, blob.getBlobStorage());
-                        test.assertEqual(checksum, blob.getChecksum());
-                    });
-                };
-
-                getBlobTest.run(BlobChecksum.create("md5", BitArray.create(5)));
-                getBlobTest.run(BlobChecksum.create("MD5", BitArray.createFromBitString("01100")));
-            });
-
             runner.testGroup("iterateBlobs()", () ->
             {
                 runner.test("with no blobs", (Test test) ->
@@ -46,80 +16,140 @@ public interface BlobStorageTests
                     final BlobStorage blobStorage = creator.run();
 
                     final Iterator<Blob> blobs = blobStorage.iterateBlobs();
-                    test.assertNotNull(blobs);
+                    IteratorTests.assertIterator(test, blobs, false, null);
                     test.assertEqual(Iterable.create(), blobs.toList());
+                });
+
+                runner.test("with one blob", (Test test) ->
+                {
+                    final BlobStorage blobStorage = creator.run();
+                    final Blob blob = blobStorage.createBlob(new byte[] { 10, 20 }).await();
+
+                    final Iterator<Blob> blobs = blobStorage.iterateBlobs();
+                    IteratorTests.assertIterator(test, blobs, false, null);
+                    test.assertEqual(Iterable.create(blob), blobs.toList());
                 });
             });
 
-            runner.testGroup("blobExists(BlobChecksum)", () ->
+            runner.testGroup("getBlob(BlobId)", () ->
             {
-                final Action2<BlobChecksum,Throwable> blobExistsErrorTest = (BlobChecksum checksum, Throwable expected) ->
+                runner.test("with null", (Test test) ->
                 {
-                    runner.test("with " + checksum, (Test test) ->
+                    final BlobStorage blobStorage = creator.run();
+                    test.assertThrows(() -> blobStorage.getBlob(null),
+                        new PreConditionFailure("blobId cannot be null."));
+                    test.assertEqual(Iterable.create(), blobStorage.iterateBlobs().toList());
+                });
+
+                runner.test("with non-existing BlobId", (Test test) ->
+                {
+                    final BlobStorage blobStorage = creator.run();
+                    final BlobId blobId = BlobId.create().addElement("a", "b");
+                    final Blob blob = blobStorage.getBlob(blobId);
+                    test.assertNotNull(blob);
+                    test.assertEqual(blobId, blob.getId());
+                    test.assertFalse(blob.exists().await());
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
+                    test.assertEqual(Iterable.create(), blobStorage.iterateBlobs().toList());
+                });
+
+                runner.test("with existing BlobId", (Test test) ->
+                {
+                    final BlobStorage blobStorage = creator.run();
+
+                    final Blob blob1 = blobStorage.createBlob(new byte[] { 1, 2, 3 }).await();
+                    final BlobId blobId = blob1.getId();
+
+                    final Blob blob2 = blobStorage.getBlob(blobId);
+                    test.assertNotNull(blob2);
+                    test.assertEqual(blobId, blob2.getId());
+                    test.assertTrue(blob2.exists().await());
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
+                    test.assertEqual(Iterable.create(blob2), blobStorage.iterateBlobs().toList());
+                });
+            });
+
+            runner.testGroup("blobExists(BlobId)", () ->
+            {
+                final Action2<BlobId,Throwable> blobExistsErrorTest = (BlobId blobId, Throwable expected) ->
+                {
+                    runner.test("with " + blobId, (Test test) ->
                     {
                         final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.blobExists(checksum).await(),
+                        test.assertThrows(() -> blobStorage.blobExists(blobId).await(),
                             expected);
+                        test.assertEqual(Iterable.create(), blobStorage.iterateBlobs().toList());
                     });
                 };
 
-                blobExistsErrorTest.run(null, new PreConditionFailure("checksum cannot be null."));
+                blobExistsErrorTest.run(null, new PreConditionFailure("blobId cannot be null."));
+                blobExistsErrorTest.run(BlobId.create(), new PreConditionFailure("blobId.getElementCount() (0) must be greater than or equal to 1."));
 
-                final Action1<BlobChecksum> blobExistsTest = (BlobChecksum checksum) ->
+                runner.test("with non-existing blob", (Test test) ->
                 {
-                    runner.test("with " + checksum, (Test test) ->
-                    {
-                        final BlobStorage blobStorage = creator.run();
-                        test.assertFalse(blobStorage.blobExists(checksum).await());
-                    });
-                };
-
-                blobExistsTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("01010101")));
-                blobExistsTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("111")));
+                    final BlobStorage blobStorage = creator.run();
+                    test.assertFalse(blobStorage.blobExists(BlobId.create().addElement("a", "b")).await());
+                });
 
                 runner.test("with existing blob", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
-
-                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3 }).await();
-
-                    test.assertEqual(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromHexString("5289DF737DF57326FCDD22597AFB1FAC")), blob.getChecksum());
-                    test.assertTrue(blobStorage.blobExists(blob.getChecksum()).await());
+                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3, 4 }).await();
+                    test.assertTrue(blobStorage.blobExists(blob.getId()).await());
                 });
             });
 
-            runner.testGroup("getBlobByteCount(BlobChecksum)", () ->
+            runner.testGroup("getBlobByteCount(BlobId)", () ->
             {
-                final Action2<BlobChecksum,Throwable> getBlobByteCountErrorTest = (BlobChecksum checksum, Throwable expected) ->
+                final Action2<BlobId,Throwable> getBlobByteCountErrorTest = (BlobId blobId, Throwable expected) ->
                 {
-                    runner.test("with " + checksum, (Test test) ->
+                    runner.test("with " + blobId, (Test test) ->
                     {
                         final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.getBlobByteCount(checksum).await(),
+                        test.assertThrows(() -> blobStorage.getBlobByteCount(blobId).await(),
                             expected);
+                        test.assertEqual(Iterable.create(), blobStorage.iterateBlobs().toList());
                     });
                 };
 
-                getBlobByteCountErrorTest.run(null, new PreConditionFailure("checksum cannot be null."));
-                getBlobByteCountErrorTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("01010101")), new BlobNotFoundException("Could not find a blob with checksum MD5:55."));
-                getBlobByteCountErrorTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("111")), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
+                getBlobByteCountErrorTest.run(null, new PreConditionFailure("blobId cannot be null."));
+                getBlobByteCountErrorTest.run(BlobId.create(), new PreConditionFailure("blobId.getElementCount() (0) must be greater than or equal to 1."));
+                getBlobByteCountErrorTest.run(BlobId.create().addElement("a", "b"), new BlobNotFoundException("Could not find a blob with the id {\"a\":\"b\"}."));
+
+                runner.test("with existing blob", (Test test) ->
+                {
+                    final BlobStorage blobStorage = creator.run();
+                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3, 4 }).await();
+                    test.assertEqual(4, blobStorage.getBlobByteCount(blob.getId()).await());
+                });
             });
 
-            runner.testGroup("getBlobContents(BlobChecksum)", () ->
+            runner.testGroup("getBlobContents(BlobId)", () ->
             {
-                final Action2<BlobChecksum,Throwable> getBlobByteCountErrorTest = (BlobChecksum checksum, Throwable expected) ->
+                final Action2<BlobId,Throwable> getBlobContentsErrorTest = (BlobId blobId, Throwable expected) ->
                 {
-                    runner.test("with " + checksum, (Test test) ->
+                    runner.test("with " + blobId, (Test test) ->
                     {
                         final BlobStorage blobStorage = creator.run();
-                        test.assertThrows(() -> blobStorage.getBlobContents(checksum).await(),
+                        test.assertThrows(() -> blobStorage.getBlobContents(blobId).await(),
                             expected);
+                        test.assertEqual(Iterable.create(), blobStorage.iterateBlobs().toList());
                     });
                 };
 
-                getBlobByteCountErrorTest.run(null, new PreConditionFailure("checksum cannot be null."));
-                getBlobByteCountErrorTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("01010101")), new BlobNotFoundException("Could not find a blob with checksum MD5:55."));
-                getBlobByteCountErrorTest.run(BlobChecksum.create(BlobChecksumType.MD5, BitArray.createFromBitString("111")), new BlobNotFoundException("Could not find a blob with checksum MD5:E."));
+                getBlobContentsErrorTest.run(null, new PreConditionFailure("blobId cannot be null."));
+                getBlobContentsErrorTest.run(BlobId.create(), new PreConditionFailure("blobId.getElementCount() (0) must be greater than or equal to 1."));
+                getBlobContentsErrorTest.run(BlobId.create().addElement("a", "b"), new BlobNotFoundException("Could not find a blob with the id {\"a\":\"b\"}."));
+
+                runner.test("with existing blob", (Test test) ->
+                {
+                    final BlobStorage blobStorage = creator.run();
+                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3, 4 }).await();
+                    try (final ByteReadStream blobContents = blobStorage.getBlobContents(blob.getId()).await())
+                    {
+                        test.assertEqual(new byte[] { 1, 2, 3, 4 }, blobContents.readAllBytes().await());
+                    }
+                });
             });
 
             runner.testGroup("createBlob(byte[])", () ->
@@ -127,49 +157,61 @@ public interface BlobStorageTests
                 runner.test("with null", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
+
                     test.assertThrows(() -> blobStorage.createBlob((byte[])null),
                         new PreConditionFailure("blobContents cannot be null."));
-                    test.assertEqual(Iterable.create(), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
                 });
 
-                runner.test("with empty", (Test test) ->
+                runner.test("with empty contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
                     final Blob blob = blobStorage.createBlob(new byte[0]).await();
-                    test.assertNotNull(blob);
-                    test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("D41D8CD98F00B204E9800998ECF8427E")), blob.getChecksum());
-                    test.assertEqual(0, blob.getByteCount().await());
-                    test.assertEqual(new byte[0], blob.getContents().await().readAllBytes().await());
-
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(
+                        new byte[0],
+                        blob.getContents().await()
+                            .readAllBytes().await());
                 });
 
-                runner.test("with non-empty", (Test test) ->
+                runner.test("with non-empty contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
-                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3, 4, 5 }).await();
-                    test.assertNotNull(blob);
-                    test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("7CFDD07889B3295D6A550914AB35E068")), blob.getChecksum());
-                    test.assertEqual(5, blob.getByteCount().await());
-                    test.assertEqual(new byte[] { 1, 2, 3, 4, 5 }, blob.getContents().await().readAllBytes().await());
-
+                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3, 4 }).await();
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(
+                        new byte[] { 1, 2, 3, 4 },
+                        blob.getContents().await()
+                            .readAllBytes().await());
                 });
 
-                runner.test("with existing blob", (Test test) ->
+                runner.test("with already existing contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
-                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3, 4, 5 }).await();
+                    final Blob blob = blobStorage.createBlob(new byte[0]).await();
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
 
-                    test.assertThrows(() -> blobStorage.createBlob(new byte[] { 1, 2, 3, 4, 5 }).await(),
+                    test.assertThrows(() -> blobStorage.createBlob(new byte[0]).await(),
                         new BlobAlreadyExistsException(blob));
-
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(
+                        new byte[0],
+                        blob.getContents().await()
+                            .readAllBytes().await());
                 });
             });
 
@@ -178,49 +220,72 @@ public interface BlobStorageTests
                 runner.test("with null", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
+
                     test.assertThrows(() -> blobStorage.createBlob((ByteReadStream)null),
                         new PreConditionFailure("blobContents cannot be null."));
-                    test.assertEqual(Iterable.create(), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
                 });
 
-                runner.test("with empty", (Test test) ->
+                runner.test("with empty contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
-                    final Blob blob = blobStorage.createBlob(InMemoryByteStream.create().endOfStream()).await();
-                    test.assertNotNull(blob);
-                    test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("D41D8CD98F00B204E9800998ECF8427E")), blob.getChecksum());
-                    test.assertEqual(0, blob.getByteCount().await());
-                    test.assertEqual(new byte[0], blob.getContents().await().readAllBytes().await());
-
+                    final Blob blob;
+                    try (final InMemoryByteStream blobContents = InMemoryByteStream.create().endOfStream())
+                    {
+                        blob = blobStorage.createBlob(blobContents).await();
+                    }
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(
+                        new byte[0],
+                        blob.getContents().await()
+                            .readAllBytes().await());
                 });
 
-                runner.test("with non-empty", (Test test) ->
+                runner.test("with non-empty contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
-                    final Blob blob = blobStorage.createBlob(InMemoryByteStream.create(new byte[] { 1, 2, 3, 4, 5 }).endOfStream()).await();
-                    test.assertNotNull(blob);
-                    test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("7CFDD07889B3295D6A550914AB35E068")), blob.getChecksum());
-                    test.assertEqual(5, blob.getByteCount().await());
-                    test.assertEqual(new byte[] { 1, 2, 3, 4, 5 }, blob.getContents().await().readAllBytes().await());
-
+                    final Blob blob;
+                    try (final InMemoryByteStream blobContents = InMemoryByteStream.create(new byte[] { 1, 2, 3, 4 }).endOfStream())
+                    {
+                        blob = blobStorage.createBlob(blobContents).await();
+                    }
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(
+                        new byte[] { 1, 2, 3, 4 },
+                        blob.getContents().await()
+                            .readAllBytes().await());
                 });
 
-                runner.test("with existing blob", (Test test) ->
+                runner.test("with already existing contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
-                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3, 4, 5 }).await();
+                    final Blob blob = blobStorage.createBlob(new byte[0]).await();
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
 
-                    test.assertThrows(() -> blobStorage.createBlob(InMemoryByteStream.create(new byte[] { 1, 2, 3, 4, 5 }).endOfStream()).await(),
-                        new BlobAlreadyExistsException(blob));
-
+                    try (final InMemoryByteStream blobContents = InMemoryByteStream.create().endOfStream())
+                    {
+                        test.assertThrows(() -> blobStorage.createBlob(blobContents).await(),
+                            new BlobAlreadyExistsException(blob));
+                    }
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(
+                        new byte[0],
+                        blob.getContents().await()
+                            .readAllBytes().await());
                 });
             });
 
@@ -229,49 +294,62 @@ public interface BlobStorageTests
                 runner.test("with null", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
+
                     test.assertThrows(() -> blobStorage.getOrCreateBlob((byte[])null),
                         new PreConditionFailure("blobContents cannot be null."));
-                    test.assertEqual(Iterable.create(), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
                 });
 
-                runner.test("with empty", (Test test) ->
+                runner.test("with empty contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
                     final Blob blob = blobStorage.getOrCreateBlob(new byte[0]).await();
-                    test.assertNotNull(blob);
-                    test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("D41D8CD98F00B204E9800998ECF8427E")), blob.getChecksum());
-                    test.assertEqual(0, blob.getByteCount().await());
-                    test.assertEqual(new byte[0], blob.getContents().await().readAllBytes().await());
-
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(
+                        new byte[0],
+                        blob.getContents().await()
+                            .readAllBytes().await());
                 });
 
-                runner.test("with non-empty", (Test test) ->
+                runner.test("with non-empty contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
-                    final Blob blob = blobStorage.getOrCreateBlob(new byte[] { 1, 2, 3, 4, 5 }).await();
-                    test.assertNotNull(blob);
-                    test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("7CFDD07889B3295D6A550914AB35E068")), blob.getChecksum());
-                    test.assertEqual(5, blob.getByteCount().await());
-                    test.assertEqual(new byte[] { 1, 2, 3, 4, 5 }, blob.getContents().await().readAllBytes().await());
-
+                    final Blob blob = blobStorage.getOrCreateBlob(new byte[] { 1, 2, 3, 4 }).await();
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(
+                        new byte[] { 1, 2, 3, 4 },
+                        blob.getContents().await()
+                            .readAllBytes().await());
                 });
 
-                runner.test("with existing blob", (Test test) ->
+                runner.test("with already existing contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
-                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3, 4, 5 }).await();
+                    final Blob blob1 = blobStorage.getOrCreateBlob(new byte[0]).await();
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
 
-                    final Blob blob2 = blobStorage.getOrCreateBlob(new byte[] { 1, 2, 3, 4, 5 }).await();
-                    test.assertEqual(blob, blob2);
+                    final Blob blob2 = blobStorage.getOrCreateBlob(new byte[0]).await();
+                    test.assertNotNull(blob2);
+                    test.assertEqual(blob1, blob2);
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
+                    test.assertEqual(Iterable.create(blob1), blobStorage.iterateBlobs().toList());
 
-                    test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+                    test.assertEqual(
+                        new byte[0],
+                        blob2.getContents().await()
+                            .readAllBytes().await());
                 });
             });
 
@@ -280,49 +358,73 @@ public interface BlobStorageTests
                 runner.test("with null", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
+
                     test.assertThrows(() -> blobStorage.getOrCreateBlob((ByteReadStream)null),
                         new PreConditionFailure("blobContents cannot be null."));
-                    test.assertEqual(Iterable.create(), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
                 });
 
-                runner.test("with empty", (Test test) ->
+                runner.test("with empty contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
-                    final Blob blob = blobStorage.getOrCreateBlob(InMemoryByteStream.create().endOfStream()).await();
-                    test.assertNotNull(blob);
-                    test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("D41D8CD98F00B204E9800998ECF8427E")), blob.getChecksum());
-                    test.assertEqual(0, blob.getByteCount().await());
-                    test.assertEqual(new byte[0], blob.getContents().await().readAllBytes().await());
-
+                    final Blob blob;
+                    try (final InMemoryByteStream blobContents = InMemoryByteStream.create().endOfStream())
+                    {
+                        blob = blobStorage.getOrCreateBlob(blobContents).await();
+                    }
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(
+                        new byte[0],
+                        blob.getContents().await()
+                            .readAllBytes().await());
                 });
 
-                runner.test("with non-empty", (Test test) ->
+                runner.test("with non-empty contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
-                    final Blob blob = blobStorage.getOrCreateBlob(InMemoryByteStream.create(new byte[] { 1, 2, 3, 4, 5 }).endOfStream()).await();
-                    test.assertNotNull(blob);
-                    test.assertSame(blobStorage, blob.getBlobStorage());
-                    test.assertEqual(BlobChecksum.create("MD5", BitArray.createFromHexString("7CFDD07889B3295D6A550914AB35E068")), blob.getChecksum());
-                    test.assertEqual(5, blob.getByteCount().await());
-                    test.assertEqual(new byte[] { 1, 2, 3, 4, 5 }, blob.getContents().await().readAllBytes().await());
-
+                    final Blob blob;
+                    try (final InMemoryByteStream blobContents = InMemoryByteStream.create(new byte[] { 1, 2, 3, 4 }).endOfStream())
+                    {
+                        blob = blobStorage.getOrCreateBlob(blobContents).await();
+                    }
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
                     test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+
+                    test.assertEqual(
+                        new byte[] { 1, 2, 3, 4 },
+                        blob.getContents().await()
+                            .readAllBytes().await());
                 });
 
-                runner.test("with existing blob", (Test test) ->
+                runner.test("with already existing contents", (Test test) ->
                 {
                     final BlobStorage blobStorage = creator.run();
+                    test.assertEqual(0, blobStorage.getBlobCount().await());
 
-                    final Blob blob = blobStorage.createBlob(new byte[] { 1, 2, 3, 4, 5 }).await();
+                    final Blob blob1 = blobStorage.getOrCreateBlob(new byte[0]).await();
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
 
-                    final Blob blob2 = blobStorage.getOrCreateBlob(InMemoryByteStream.create(new byte[] { 1, 2, 3, 4, 5 }).endOfStream()).await();
-                    test.assertEqual(blob, blob2);
+                    final Blob blob2;
+                    try (final InMemoryByteStream blobContents = InMemoryByteStream.create().endOfStream())
+                    {
+                        blob2 = blobStorage.getOrCreateBlob(blobContents).await();
+                    }
+                    test.assertEqual(blob1, blob2);
+                    test.assertEqual(1, blobStorage.getBlobCount().await());
+                    test.assertEqual(Iterable.create(blob1), blobStorage.iterateBlobs().toList());
 
-                    test.assertEqual(Iterable.create(blob), blobStorage.iterateBlobs().toList());
+                    test.assertEqual(
+                        new byte[0],
+                        blob1.getContents().await()
+                            .readAllBytes().await());
                 });
             });
         });

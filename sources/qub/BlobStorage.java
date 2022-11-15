@@ -6,41 +6,46 @@ package qub;
 public interface BlobStorage
 {
     /**
-     * Get the {@link Blob} that has the provided checksum.
-     * @param checksum The checksum of the {@link Blob}.
-     * @return The matching {@link Blob}.
-     */
-    public default Blob getBlob(BlobChecksum checksum)
-    {
-        PreCondition.assertNotNull(checksum, "checksum");
-
-        return Blob.create(this, checksum);
-    }
-
-    /**
-     * Get an {@link Iterator} that will return all of the blobs in this {@link BlobStorage}.
+     * Get an {@link Iterator} that will return the blobs in this {@link BlobStorage}.
      */
     public Iterator<Blob> iterateBlobs();
 
     /**
-     * Get whether a {@link Blob} exists for the provided checksum.
-     * @param checksum The checksum of the {@link Blob}.
+     * Get the number of {@link Blob}s that are in this {@link BlobStorage}.
      */
-    public Result<Boolean> blobExists(BlobChecksum checksum);
+    public Result<Integer> getBlobCount();
 
     /**
-     * Get the byte count of the {@link Blob} with the provided {@link BlobChecksum}.
-     * @param checksum The {@link BlobChecksum} of the {@link Blob}.
-     * @return The byte count of the blob with the provided checksum.
+     * Get a {@link Blob} reference that can be used to access a {@link Blob} in this
+     * {@link BlobStorage}. This method only creates the {@link Blob} reference and doesn't
+     * validate that the {@link Blob} actually exists.
+     * @param blobId The {@link BlobId} of the {@link Blob}.
      */
-    public Result<Long> getBlobByteCount(BlobChecksum checksum);
+    public default Blob getBlob(BlobId blobId)
+    {
+        PreCondition.assertNotNull(blobId, "blobId");
+
+        return Blob.create(this, blobId);
+    }
 
     /**
-     * Get the byte contents of the {@link Blob} with the provided {@link BlobChecksum}.
-     * @param checksum The {@link BlobChecksum} of the {@link Blob}.
-     * @return The byte contents of the {@link Blob} with the provided {@link BlobChecksum}.
+     * Get whether a {@link Blob} exists for the provided {@link BlobId}.
+     * @param blobId The {@link BlobId} of the {@link Blob} to look for.
      */
-    public Result<ByteReadStream> getBlobContents(BlobChecksum checksum);
+    public Result<Boolean> blobExists(BlobId blobId);
+
+    /**
+     * Get the byte count of the {@link Blob} with the provided {@link BlobId}.
+     * @param blobId The {@link BlobId} of the {@link Blob}.
+     * @return The byte count of the {@link Blob} with the provided {@link BlobId}.
+     */
+    public Result<Long> getBlobByteCount(BlobId blobId);
+
+    /**
+     * Get the byte contents of the {@link Blob} with the provided {@link BlobId}.
+     * @param blobId The {@link BlobId} of the {@link Blob}.
+     */
+    public Result<ByteReadStream> getBlobContents(BlobId blobId);
 
     /**
      * Create a new {@link Blob} from the provided contents.
@@ -84,5 +89,16 @@ public interface BlobStorage
 
         return this.createBlob(blobContents)
             .catchError(BlobAlreadyExistsException.class, BlobAlreadyExistsException::getAlreadyExistingBlob);
+    }
+
+    /**
+     * Assert that the provided {@link BlobId} is not null and not empty.
+     * @param blobId The {@link BlobId} to check.
+     * @param expressionName The "name" of the expression that created the {@link BlobId} to check.
+     */
+    public static void assertNotNullAndNotEmpty(BlobId blobId, String expressionName)
+    {
+        PreCondition.assertNotNull(blobId, expressionName);
+        PreCondition.assertGreaterThanOrEqualTo(blobId.getElementCount(), 1, expressionName + ".getElementCount()");
     }
 }

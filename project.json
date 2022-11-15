@@ -7,8 +7,8 @@
     "dependencies": [
       {
         "publisher": "qub",
-        "project": "md5-java",
-        "version": "2"
+        "project": "hash-java",
+        "version": "4"
       }
     ]
   }

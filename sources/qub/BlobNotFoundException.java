@@ -1,14 +1,17 @@
 package qub;
 
+/**
+ * An {@link NotFoundException} that is thrown when a {@link Blob} isn't found.
+ */
 public class BlobNotFoundException extends NotFoundException
 {
-    private final Blob notFoundBlob;
+    private final Blob blob;
 
     public BlobNotFoundException(String message, Blob notFoundBlob)
     {
         super(message);
 
-        this.notFoundBlob = notFoundBlob;
+        this.blob = notFoundBlob;
     }
 
     public BlobNotFoundException(String message)
@@ -16,23 +19,23 @@ public class BlobNotFoundException extends NotFoundException
         this(message, null);
     }
 
-    public BlobNotFoundException(Blob notFoundBlob)
+    public BlobNotFoundException(Blob blob)
     {
-        this(BlobNotFoundException.getMessage(notFoundBlob), notFoundBlob);
+        this(BlobNotFoundException.getMessage(blob), blob);
     }
 
-    private static String getMessage(Blob notFoundBlob)
+    private static String getMessage(Blob blob)
     {
-        PreCondition.assertNotNull(notFoundBlob, "notFoundBlob");
+        PreCondition.assertNotNull(blob, "blob");
 
-        return "Could not find a blob with checksum " + notFoundBlob.getChecksum().toString() + ".";
+        return "Could not find a blob with the id " + blob.getId().toString() + ".";
     }
 
     /**
      * Get the {@link Blob} that doesn't exist.
      */
-    public Blob getNotFoundBlob()
+    public Blob getBlob()
     {
-        return this.notFoundBlob;
+        return this.blob;
     }
 }
